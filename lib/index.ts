@@ -1,11 +1,14 @@
-export interface ImplementMe {
-	myFunc(): Promise<string>;
-}
+import { PatternLinker } from './patternLinker';
 
-const moo = 1;
+const patternLinker = new PatternLinker();
 
-export class ImplementClass implements ImplementMe {
-	public async myFunc() {
-		return `I need implementing! ${moo}`;
-	}
-}
+const exec = async () => {
+	await patternLinker.init({ auth_token: process.env.JF_AUTH_TOKEN });
+	await patternLinker.loadPatternDiagnosticsFromFile(
+		'input/out_diagnostics.json',
+	);
+	await patternLinker.loadConfiguration('input/config.json');
+	await patternLinker.link();
+};
+
+exec();
