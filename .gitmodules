@@ -1,0 +1,3 @@
+[submodule "patterns-json-to-jellyfish"]
+	path = patterns-json-to-jellyfish
+	url = git@github.com:balena-io-playground/patterns-json-to-jellyfish.git

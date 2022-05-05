@@ -1,8 +1,8 @@
 {
-  "name": "balena-typescript-skeleton",
-  "version": "2.1.0",
-  "description": "Skeleton template for a balena TypeScript project",
-  "homepage": "https://github.com/balena-io/balena-typescript-skeleton#readme",
+  "name": "patterns-json-to-jellyfish",
+  "version": "0.1.0",
+  "description": "Patterns-json diagnostics to jellyfish updater",
+  "homepage": "https://github.com/balena-io-playground/patterns-json-to-jellyfish#readme",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "keywords": [
@@ -13,10 +13,10 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/balena-io/balena-typescript-skeleton.git"
+    "url": "git+https://github.com/balena-io-playground/patterns-json-to-jellyfish.git"
   },
   "bugs": {
-    "url": "https://github.com/balena-io/balena-typescript-skeleton/issues"
+    "url": "https://github.com/balena-io-playground/patterns-json-to-jellyfish/issues"
   },
   "files": [
     "build/"
