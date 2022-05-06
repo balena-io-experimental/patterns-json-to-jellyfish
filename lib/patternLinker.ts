@@ -72,27 +72,65 @@ export class PatternLinker {
 		};
 
 		try {
-			const result = await this.sdk.action(action);
+			await this.sdk.action(action);
 		} catch (err) {
 			console.error(`err: ${err} `);
 		}
 	}
 
-	private async linkSinglePattern(spThreadId: string, singlePatterResult: any) {
-		const shouldLink = true;
-		Object.values(singlePatterResult).reduce(
-			(prev, curr) => prev && curr,
-			shouldLink,
-		);
+	private async addDiagnosticsWhisperToSupportThread(
+		spThreadId: string,
+		message: string,
+	) {
+		const action = {
+			card: spThreadId,
+			type: 'support-thread@1.0.0',
+			action: 'action-create-event@1.0.0',
+			arguments: {
+				payload: {
+					mentionsUser: [],
+					alertsUser: [],
+					mentionsGroup: [],
+					alertsGroup: [],
+					message: message,
+				},
+				tags: [],
+				type: 'whisper',
+			},
+		};
 
-		if (singlePatterResult.permalinkPattern && shouldLink) {
-			const permalinkParts = singlePatterResult.permalinkPattern.split('/');
-			const patternSlug = permalinkParts[permalinkParts.length - 1];
-			const patternId = await this.getIdFromSlug(patternSlug);
-			if (spThreadId && patternId) {
-				await this.linkPatternToThread(spThreadId, patternId);
+		try {
+			await this.sdk.action(action);
+		} catch (err) {
+			console.error(`err: ${err} `);
+		}
+	}
+
+	private async linkPatterns(spThreadId: string, results: any) {
+		for await (const singlePatterResult of results) {
+			if (singlePatterResult.permalinkPattern) {
+				const permalinkParts = singlePatterResult.permalinkPattern.split('/');
+				const patternSlug = permalinkParts[permalinkParts.length - 1];
+				const patternId = await this.getIdFromSlug(patternSlug);
+				if (spThreadId && patternId) {
+					await this.linkPatternToThread(spThreadId, patternId);
+				}
 			}
 		}
+	}
+
+	private async createDiagnosticsWhisper(spThreadId: string, results: any) {
+		const allPatternsWhisperMessage = `Diagnostics linking patterns: `;
+		const whisperMessage = results.reduce(
+			(prev: any, curr: any) =>
+				prev +
+				`\n ${curr.title ? '#### ' + curr.title + '\n' : ''} ${
+					curr.permalinkPattern
+				}`,
+			allPatternsWhisperMessage,
+		);
+
+		await this.addDiagnosticsWhisperToSupportThread(spThreadId, whisperMessage);
 	}
 
 	async loadPatternDiagnosticsFromFile(filename: string) {
@@ -109,14 +147,23 @@ export class PatternLinker {
 				`load file and config before linking patterns to support thread`,
 			);
 		}
-		const results = this.patternsDiagnostics.results;
-
-		const spThreadId = await this.getIdFromSlug(this.config?.supportThreadSlug);
-		await Promise.all(
-			Object.values(results).map(async (res) => {
-				await this.linkSinglePattern(spThreadId, res);
-			}),
+		const results = Object.values(this.patternsDiagnostics.results).filter(
+			(singlePatterResult: any) => {
+				const shouldLinkFilter = Object.values(singlePatterResult).reduce(
+					(prev: any, curr: any) => prev && (curr.value ?? true),
+					true,
+				);
+				return shouldLinkFilter;
+			},
 		);
+
+		if (results.length > 0) {
+			const spThreadId = await this.getIdFromSlug(
+				this.config?.supportThreadSlug,
+			);
+			await this.createDiagnosticsWhisper(spThreadId, results);
+			await this.linkPatterns(spThreadId, results);
+		}
 	}
 
 	async init(config: {
